@@ -1,3 +1,4 @@
+from builtins import range
 from tkinter import *;
 from random import *
 
@@ -15,37 +16,37 @@ CELL_COLOR_DICT = {2: "#776e65", 4: "#776e65", 8: "#f9f6f2", 16: "#f9f6f2", \
                    512: "#f9f6f2", 1024: "#f9f6f2", 2048: "#f9f6f2"}
 FONT = ("Verdana", 40, "bold")
 
-KEY_UP_ALT = "\'\\uf700\'"
-KEY_DOWN_ALT = "\'\\uf701\'"
-KEY_LEFT_ALT = "\'\\uf702\'"
-KEY_RIGHT_ALT = "\'\\uf703\'"
+CELL_VALUE_EMPTY = 0
 
-KEY_UP = "'w'"
-KEY_DOWN = "'s'"
-KEY_LEFT = "'a'"
-KEY_RIGHT = "'d'"
+KEYCODE_LEFT = (37, 65)
+KEYCODE_UP = (38, 87)
+KEYCODE_RIGHT = (39, 68)
+KEYCODE_DOWN = (40, 83)
 
 
-class GameGrid(Frame):
+class Game2048(Frame):
+    nowValues = [[CELL_VALUE_EMPTY]*GRID_LENGTH for i in range(GRID_LENGTH)]; # game cell value
     def __init__(self):
-        Frame.__init__(self)
+        # TODO check frame is valuable
+        self.frame = Frame.__init__(self);
 
-        self.grid()
+        self.grid();
+        self.game = self.master;
         # self.master.title('2048')
         # self.master.bind("<Key>", self.key_down)
 
         self.grid_cells = []
-        self.init_grid()
-        # self.init_matrix()
-        # self.update_grid_cells()
-
+        self.bindEvent_KEY();
+        self.init_board()
+        self.init_values(2);
         self.mainloop()
 
-    def init_grid(self):
+    def init_board(self):
         # background를 grid로 구현, color, size 입력
         background = Frame(self, bg=BACKGROUND_COLOR_GAME, width=SIZE_GAME, height=SIZE_GAME)
         background.grid()
 
+        # N*N board에 cell init
         for i in range(GRID_LENGTH):
             grid_row = []
             for j in range(GRID_LENGTH):
@@ -60,5 +61,54 @@ class GameGrid(Frame):
 
             self.grid_cells.append(grid_row)
 
+    def update_grid_cells(self):
+        for i in range(GRID_LENGTH):
+            for j in range(GRID_LENGTH):
+                new_number = self.nowValues[i][j]
+                if new_number == CELL_VALUE_EMPTY:
+                    self.grid_cells[i][j].configure(text="", bg=BACKGROUND_COLOR_CELL_EMPTY)
+                else:
+                    self.grid_cells[i][j].configure(text=str(new_number), bg=BACKGROUND_COLOR_DICT[new_number],
+                                                    fg=CELL_COLOR_DICT[new_number])
 
-game = GameGrid();
+    def move(self, inputKey):
+        code = inputKey.keycode;
+        #test
+        ##print('input', inputKey);
+        ##print('input', code);
+
+
+        # TODO cal move value
+        ## calMove();
+        if(code in KEYCODE_UP) :
+
+            print('up');
+        elif(code in KEYCODE_LEFT) :
+            print('left');
+        elif(code in KEYCODE_RIGHT) :
+            print('right');
+        elif (code in KEYCODE_DOWN):
+            print('down');
+
+        pass;
+
+    def bindEvent_KEY(self):
+        self.game.bind("<Up>", self.move);
+        self.game.bind("<Down>", self.move);
+        self.game.bind("<Left>", self.move);
+        self.game.bind("<Right>", self.move);
+        self.game.bind("<w>", self.move);
+        self.game.bind("<a>", self.move);
+        self.game.bind("<d>", self.move);
+        self.game.bind("<s>", self.move);
+        pass
+
+    def init_values(self, value):
+        # default value into 0,0
+        self.nowValues[0][0] = value;
+
+        self.update_grid_cells();
+        pass;
+
+
+game = Game2048();

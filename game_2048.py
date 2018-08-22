@@ -1,10 +1,11 @@
-from builtins import range
+# from builtins import range
 from tkinter import *;
-from random import *
+from random import randrange;
+import time;
 
 SIZE_GAME = 500  # 초기 사이즈
 GRID_LENGTH = 4  # 크기 (N * N)
-GRID_PADDING = 10   # 셀 간격
+GRID_PADDING = 10  # 셀 간격
 
 BACKGROUND_COLOR_GAME = "#92877d"
 BACKGROUND_COLOR_CELL_EMPTY = "#9e948a"
@@ -16,6 +17,7 @@ CELL_COLOR_DICT = {2: "#776e65", 4: "#776e65", 8: "#f9f6f2", 16: "#f9f6f2", \
                    512: "#f9f6f2", 1024: "#f9f6f2", 2048: "#f9f6f2"}
 FONT = ("Verdana", 40, "bold")
 
+CELL_DEFAULT_VALUE = 2
 CELL_VALUE_EMPTY = 0
 
 KEYCODE_LEFT = (37, 65)
@@ -25,20 +27,22 @@ KEYCODE_DOWN = (40, 83)
 
 
 class Game2048(Frame):
-    nowValues = [[CELL_VALUE_EMPTY]*GRID_LENGTH for i in range(GRID_LENGTH)]; # game cell value
+    CELL_MAX_VALUE = CELL_DEFAULT_VALUE;
+    nowValues = [[CELL_VALUE_EMPTY] * GRID_LENGTH for i in range(GRID_LENGTH)];  # game cell value
+
     def __init__(self):
         # TODO check frame is valuable
         self.frame = Frame.__init__(self);
 
         self.grid();
         self.game = self.master;
-        # self.master.title('2048')
+        self.master.title('2048')
         # self.master.bind("<Key>", self.key_down)
 
         self.grid_cells = []
         self.bindEvent_KEY();
         self.init_board()
-        self.init_values(2);
+        self.init_values(CELL_DEFAULT_VALUE);
         self.mainloop()
 
     def init_board(self):
@@ -71,28 +75,110 @@ class Game2048(Frame):
                     self.grid_cells[i][j].configure(text=str(new_number), bg=BACKGROUND_COLOR_DICT[new_number],
                                                     fg=CELL_COLOR_DICT[new_number])
 
+    def changeMaximum(self, value):
+        self.CELL_MAX_VALUE = value if value > self.CELL_MAX_VALUE else self.CELL_MAX_VALUE;
+        pass;
+
+    '''action : 1차원배열을 한칸씩 밀면서, merge or move 해준다.'''
+
+    def push(self, arg):
+        idx = 0;
+
+        # 1번부터 순서대로 밀어준다.
+        for i in range(1, GRID_LENGTH):
+            if (arg[i] < 1):
+                continue;
+
+            if (arg[idx] > CELL_VALUE_EMPTY):
+                # merge
+                if (arg[idx] == arg[i]):
+                    arg[idx] *= CELL_DEFAULT_VALUE;
+                    arg[i] = CELL_VALUE_EMPTY;
+
+                    self.changeMaximum(arg[idx]);
+                    idx+=1;
+                else:  # move
+                    canPush = False;
+                    # move direct
+                    for j in range(idx + 1, i):
+                        if (arg[j] == CELL_VALUE_EMPTY):
+                            idx = j;
+                            canPush = True;
+                            break;
+                        pass;
+                    if (not canPush):
+                        idx += 1;
+                    else:
+                        arg[idx] = arg[i];
+                        arg[i] = CELL_VALUE_EMPTY;
+                # idx += 1;
+            # 0(Move)
+            else:
+                arg[idx] = arg[i];
+                arg[i] = CELL_VALUE_EMPTY;
+        return arg;
+
+    nextValues = [];
+
+    def push_cells(self, isUporDown, isReverse):
+        self.nextValues = [[CELL_VALUE_EMPTY] * GRID_LENGTH for i in range(GRID_LENGTH)];
+        for i in range(GRID_LENGTH):
+            # init
+            nextRow = list(self.nowValues[i]);
+
+            # up down 은 i j 변경해서 1차원배열로 변환
+            if (isUporDown):
+                for j in range(GRID_LENGTH):
+                    nextRow[j] = self.nowValues[j][i];
+
+            if (isReverse):
+                nextRow.reverse();
+
+            nextRow = self.push(nextRow);
+
+            if (isReverse):
+                nextRow.reverse();
+
+            # up down 은 i j 변경해서 1차원배열로 재변환
+            if (isUporDown):
+                for j in range(GRID_LENGTH):
+                    self.nextValues[j][i] = nextRow[j];
+            else:
+                self.nextValues[i] = nextRow;
+
+        self.nowValues = self.nextValues;
+
     def move(self, inputKey):
         code = inputKey.keycode;
-        #test
+        # test
         ##print('input', inputKey);
         ##print('input', code);
 
 
-        # TODO cal move value
-        ## calMove();
-        if(code in KEYCODE_UP) :
+        # TODO need end check
 
-            print('up');
-        elif(code in KEYCODE_LEFT) :
+        # for i in range(4):
+        if (code in KEYCODE_LEFT):
             print('left');
-        elif(code in KEYCODE_RIGHT) :
+            self.push_cells(isUporDown=False, isReverse=False);
+        elif (code in KEYCODE_RIGHT):
             print('right');
+            self.push_cells(isUporDown=False, isReverse=True);
+        elif (code in KEYCODE_UP):
+            print('up');
+            self.push_cells(isUporDown=True, isReverse=False);
         elif (code in KEYCODE_DOWN):
             print('down');
+            self.push_cells(isUporDown=True, isReverse=True);
+        pass
 
-        pass;
+        self.make_new_cell();
+        self.update_grid_cells();
+
 
     def bindEvent_KEY(self):
+        for round in range(GRID_LENGTH):
+            pass
         self.game.bind("<Up>", self.move);
         self.game.bind("<Down>", self.move);
         self.game.bind("<Left>", self.move);
@@ -101,14 +187,27 @@ class Game2048(Frame):
         self.game.bind("<a>", self.move);
         self.game.bind("<d>", self.move);
         self.game.bind("<s>", self.move);
-        pass
+        pass;
 
     def init_values(self, value):
         # default value into 0,0
         self.nowValues[0][0] = value;
+        self.make_new_cell();
 
         self.update_grid_cells();
         pass;
+
+    def make_new_cell(self):
+        #TODO : Empty cell check & default Value Up
+        cnt = 0;
+
+
+        while (True):
+            pos = [randrange(0, GRID_LENGTH), randrange(0, GRID_LENGTH)];
+            if (self.nowValues[pos[0]][pos[1]] == CELL_VALUE_EMPTY):
+                break;
+
+        self.nowValues[pos[0]][pos[1]] = CELL_DEFAULT_VALUE;
 
 
 game = Game2048();

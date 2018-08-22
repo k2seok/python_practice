@@ -1,7 +1,6 @@
 # from builtins import range
 from tkinter import *;
 from random import randrange;
-import time;
 
 SIZE_GAME = 500  # 초기 사이즈
 GRID_LENGTH = 4  # 크기 (N * N)
@@ -34,6 +33,12 @@ class Game2048(Frame):
     nowValues = [[CELL_VALUE_EMPTY] * GRID_LENGTH for i in range(GRID_LENGTH)];  # game cell value
 
     def start(self):
+        self.frame = Frame.__init__(self);
+        self.grid();
+        self.game = self.master;
+        self.master.title('2048')
+        self.bindEvent_KEY();
+
         self.status = GAME_RUNNING;
         self.grid_cells = []
         self.init_board()
@@ -45,11 +50,6 @@ class Game2048(Frame):
 
     def __init__(self):
         self.status = GAME_LOSE;
-        self.frame = Frame.__init__(self);
-        self.grid();
-        self.game = self.master;
-        self.master.title('2048')
-        self.bindEvent_KEY();
 
         self.start();
         # self.window = Tk();
@@ -97,7 +97,6 @@ class Game2048(Frame):
         pass;
 
     '''action : 1차원배열을 한칸씩 밀면서, merge or move 해준다.'''
-
     def push(self, arg):
         idx = 0;
 
@@ -167,11 +166,13 @@ class Game2048(Frame):
 
 
     def move(self, inputKey):
-        # TODO game status 에 따른 move : game 시작전이면 start
-        if(self.status != GAME_RUNNING):
-            self.start();
-            return;
-            pass;
+        # # TODO game status 에 따른 move : game 시작전이면 start
+        # if(self.status != GAME_RUNNING):
+        #     self.start();
+        #     print('restart game...')
+        #
+        #     return;
+        #     pass;
 
         code = inputKey.keycode;
         # test

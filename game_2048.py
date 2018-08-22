@@ -25,25 +25,42 @@ KEYCODE_UP = (38, 87)
 KEYCODE_RIGHT = (39, 68)
 KEYCODE_DOWN = (40, 83)
 
+GAME_LOSE = -1;
+GAME_WIN = 1;
+GAME_RUNNING = 0;
 
 class Game2048(Frame):
     CELL_MAX_VALUE = CELL_DEFAULT_VALUE;
     nowValues = [[CELL_VALUE_EMPTY] * GRID_LENGTH for i in range(GRID_LENGTH)];  # game cell value
 
-    def __init__(self):
-        # TODO check frame is valuable
-        self.frame = Frame.__init__(self);
-
-        self.grid();
-        self.game = self.master;
-        self.master.title('2048')
-        # self.master.bind("<Key>", self.key_down)
-
+    def start(self):
+        self.status = GAME_RUNNING;
         self.grid_cells = []
-        self.bindEvent_KEY();
         self.init_board()
         self.init_values(CELL_DEFAULT_VALUE);
         self.mainloop()
+        pass;
+    # def main(self):
+    #     pass;
+
+    def __init__(self):
+        self.status = GAME_LOSE;
+        self.frame = Frame.__init__(self);
+        self.grid();
+        self.game = self.master;
+        self.master.title('2048')
+        self.bindEvent_KEY();
+
+        self.start();
+        # self.window = Tk();
+        # self.main = Canvas(self.window, width=SIZE_GAME, height=SIZE_GAME);
+        # self.main.create_image(0, 0, image=PhotoImage(file="image/ship.png"))
+        # self.main.pack();
+
+
+
+
+
 
     def init_board(self):
         # background를 grid로 구현, color, size 입력
@@ -148,16 +165,19 @@ class Game2048(Frame):
 
         self.nowValues = self.nextValues;
 
+
     def move(self, inputKey):
+        # TODO game status 에 따른 move : game 시작전이면 start
+        if(self.status != GAME_RUNNING):
+            self.start();
+            return;
+            pass;
+
         code = inputKey.keycode;
         # test
         ##print('input', inputKey);
         ##print('input', code);
 
-
-        # TODO need end check
-
-        # for i in range(4):
         if (code in KEYCODE_LEFT):
             print('left');
             self.push_cells(isUporDown=False, isReverse=False);
@@ -172,13 +192,18 @@ class Game2048(Frame):
             self.push_cells(isUporDown=True, isReverse=True);
         pass
 
+        # TODO need end check : 움직인 후, endcheck(high value win or 칸이 꽉차서 lose)
+        self.checkEnd();
+
+        if (self.status != GAME_RUNNING):
+            self.end();
+            return;
+
         self.make_new_cell();
         self.update_grid_cells();
 
 
     def bindEvent_KEY(self):
-        for round in range(GRID_LENGTH):
-            pass
         self.game.bind("<Up>", self.move);
         self.game.bind("<Down>", self.move);
         self.game.bind("<Left>", self.move);
@@ -199,15 +224,33 @@ class Game2048(Frame):
 
     def make_new_cell(self):
         #TODO : Empty cell check & default Value Up
-        cnt = 0;
+        # self.checkEnd();
+        # if(self.status != GAME_RUNNING):
+        #     self.end();
+        #     return;
 
-
-        while (True):
+        # 확률로 변경 -> 무한 루프 방지, 게임 방향 변경
+        # (가끔 움직여도 새 cell이 나타나지 않음)
+        for i in range(10):
             pos = [randrange(0, GRID_LENGTH), randrange(0, GRID_LENGTH)];
             if (self.nowValues[pos[0]][pos[1]] == CELL_VALUE_EMPTY):
+                self.nowValues[pos[0]][pos[1]] = CELL_DEFAULT_VALUE;
                 break;
 
-        self.nowValues[pos[0]][pos[1]] = CELL_DEFAULT_VALUE;
 
+
+    def checkEnd(self):
+        cnt = 0;
+        for i in range(GRID_LENGTH):
+            for j in range(GRID_LENGTH):
+                if(self.nowValues[i][j] > CELL_VALUE_EMPTY) :
+                    cnt+=1;
+        if(cnt >= GRID_LENGTH * GRID_LENGTH):
+            self.status = GAME_LOSE;
+        pass;
+
+    def end(self):
+        print('gmae end:' , 'win' if self.status == GAME_WIN else 'lose');
+        pass;
 
 game = Game2048();
